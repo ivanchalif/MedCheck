@@ -155,12 +155,28 @@ function maskKey(key: string): string {
   return key.slice(0, 4) + '••••' + key.slice(-4);
 }
 
+function cacheKey(baseUrl: string): string {
+  return 'mc_key_' + btoa(baseUrl || '').replace(/=/g, '');
+}
+
+function loadCachedKey(baseUrl: string): string {
+  try { return localStorage.getItem(cacheKey(baseUrl)) || ''; } catch { return ''; }
+}
+
+function saveCachedKey(baseUrl: string, apiKey: string): void {
+  try {
+    if (apiKey.trim()) localStorage.setItem(cacheKey(baseUrl), apiKey.trim());
+  } catch { /* ignore */ }
+}
+
 export function SettingsModal({ currentConfig, onClose, onSaved }: Props) {
   const [selectedPreset, setSelectedPreset] = useState(() =>
     detectPreset(currentConfig?.baseUrl || '')
   );
   const [baseUrl, setBaseUrl] = useState(currentConfig?.baseUrl || '');
-  const [apiKey, setApiKey] = useState('');
+  const [apiKey, setApiKey] = useState(() =>
+    loadCachedKey(currentConfig?.baseUrl || '')
+  );
   const [model, setModel] = useState(currentConfig?.model || '');
   const [showKey, setShowKey] = useState(false);
 
@@ -199,7 +215,7 @@ export function SettingsModal({ currentConfig, onClose, onSaved }: Props) {
     setSelectedPreset(p.value);
     setBaseUrl(p.baseUrl);
     if (p.defaultModel) setModel(p.defaultModel);
-    setApiKey('');
+    setApiKey(loadCachedKey(p.baseUrl));
     setTestStatus('idle');
     setTestMessage('');
     setSaveError('');
@@ -219,6 +235,7 @@ export function SettingsModal({ currentConfig, onClose, onSaved }: Props) {
     setActivatingId(sp.id);
     try {
       await saveConfig({ baseUrl: sp.baseUrl, apiKey: sp.apiKey, model: sp.model });
+      saveCachedKey(sp.baseUrl, sp.apiKey);
       onSaved();
       onClose();
     } catch (e: any) {
@@ -261,6 +278,7 @@ export function SettingsModal({ currentConfig, onClose, onSaved }: Props) {
     setSaveError('');
     try {
       await saveConfig({ baseUrl, apiKey, model });
+      if (apiKey.trim()) saveCachedKey(baseUrl, apiKey);
       onSaved();
       onClose();
     } catch (e: any) {
