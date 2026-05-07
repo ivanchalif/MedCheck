@@ -1,0 +1,20 @@
+{
+  "name": "medcheck-api-backend-server",
+  "type": "module",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Provider-agnostic AI proxy backend (OpenAI-compatible)",
+  "main": "server.js",
+  "scripts": {
+    "start": "node --env-file=.env.local server.js",
+    "dev": "nodemon --env-file=.env.local server.js"
+  },
+  "dependencies": {
+    "express": "^5.2.1",
+    "express-rate-limit": "^7.5.0"
+  },
+  "devDependencies": {
+    "@types/node": "^25.2.0",
+    "nodemon": "^3.1.11"
+  }
+}
