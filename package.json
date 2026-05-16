@@ -1,10 +1,20 @@
 {
   "name": "medcheck",
-  "workspaces": ["frontend", "backend"], 
+  "type": "module",
+  "version": "1.0.0",
+  "main": "app.js",
+  "workspaces": ["frontend", "backend"],
   "scripts": {
+    "start": "node app.js",
+    "build": "npm run build --prefix frontend",
     "dev-frontend": "npm run dev --prefix frontend",
     "dev-backend": "npm run dev --prefix backend",
     "dev": "concurrently \"npm run dev-frontend\" \"npm run dev-backend\""
+  },
+  "dependencies": {
+    "dotenv": "latest",
+    "express": "^5.2.1",
+    "express-rate-limit": "^7.5.0"
   },
   "devDependencies": {
     "concurrently": "latest"

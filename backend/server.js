@@ -121,8 +121,14 @@ function resolveModel(name) {
 const app = express();
 app.use(express.json({ limit: process?.env?.API_PAYLOAD_MAX_SIZE || '7mb' }));
 
-const PORT = process?.env?.API_BACKEND_PORT || 3001;
-const API_BACKEND_HOST = process?.env?.API_BACKEND_HOST || '127.0.0.1';
+// cPanel assigns PORT; fall back to API_BACKEND_PORT for local dev, then 3001
+const PORT = process.env.PORT || process.env.API_BACKEND_PORT || 3001;
+// cPanel requires 0.0.0.0; local dev can override via API_BACKEND_HOST
+const API_BACKEND_HOST = process.env.API_BACKEND_HOST || '0.0.0.0';
+
+// Serve built frontend in production (when frontend/dist exists)
+const DIST_DIR = path.join(__dirname, '..', 'frontend', 'dist');
+const IS_PROD = fs.existsSync(path.join(DIST_DIR, 'index.html'));
 
 if (AUTH_REQUIRED) {
   console.log('[Auth] Password protection is ENABLED (ACCESS_PASSWORD is set).');
@@ -343,6 +349,16 @@ app.post('/api/generate', requireAuth, async (req, res) => {
     res.status(500).json({ error: 'Failed to reach AI provider. Check your provider URL and network.' });
   }
 });
+
+// Static frontend (production / cPanel)
+if (IS_PROD) {
+  app.use(express.static(DIST_DIR));
+  // SPA fallback — all non-API routes return index.html (Express 5 wildcard syntax)
+  app.get('/{*splat}', (req, res) => {
+    res.sendFile(path.join(DIST_DIR, 'index.html'));
+  });
+  console.log(`[Static] Serving frontend from ${DIST_DIR}`);
+}
 
 app.listen(PORT, API_BACKEND_HOST, () => {
   console.log(`AI Proxy backend listening at http://${API_BACKEND_HOST}:${PORT}`);

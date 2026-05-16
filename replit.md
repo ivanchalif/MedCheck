@@ -31,11 +31,41 @@ See `backend/.env.local.example` for provider-specific examples (Gemini, OpenAI,
 
 - `frontend/` — React + Vite app
 - `backend/` — Express AI proxy server
+- `app.js` — cPanel startup entry point (loads `.env`, starts backend)
+- `.env.example` — cPanel environment variable template
 - `frontend/services/geminiService.ts` — AI call logic (plain fetch to `/api/generate`)
 - `frontend/vite.config.ts` — Vite config (dev server proxies `/api` to backend)
 - `backend/server.js` — Express proxy: `POST /api/generate` → upstream OpenAI-compat API
-- `backend/.env.local` — Backend environment variables
+- `backend/.env.local` — Backend environment variables (local dev only)
 - `backend/.env.local.example` — Provider configuration examples
+
+## Deploying to cPanel
+
+**One-time setup:**
+
+1. Build the frontend locally:
+   ```bash
+   npm run build
+   ```
+   This produces `frontend/dist/` — the backend serves it automatically in production.
+
+2. Upload all project files to your cPanel application root **except** `node_modules/` and `backend/.env.local`.
+
+3. In cPanel → **Setup Node.js App**:
+   - Node.js version: 20 (or latest available)
+   - Application mode: Production
+   - Application root: your upload directory
+   - Startup file: `app.js`
+
+4. Add environment variables via cPanel GUI (or create a `.env` file — see `.env.example`):
+   - `AI_BASE_URL`, `AI_API_KEY`, `AI_MODEL` (required)
+   - `ACCESS_PASSWORD` (optional — password-protects the app)
+
+5. Click **Run NPM Install**, then **Start Application**.
+
+**After code changes:** rebuild frontend, re-upload changed files, click **Restart** in cPanel.
+
+**How it works in production:** `app.js` loads `.env`, then starts `backend/server.js`. Because `frontend/dist/index.html` exists, the backend automatically serves the built frontend as static files and handles SPA routing — no separate Vite server needed.
 
 ## Architecture decisions
 
